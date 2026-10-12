@@ -10,8 +10,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
-  "https://janja-share-iw6n1lke3-jairsrib.vercel.app",
-  "https://janja-share-k3zz17dpr-jairsrib.vercel.app"
+  "https://janja-share.vercel.app",
 ];
 
 app.use(cors({
