@@ -1,0 +1,147 @@
+
+:root {
+  font-family: Inter, system-ui, Arial, sans-serif;
+  color: #f5f5f5;
+  background: #171717;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #e5e5e5;
+  color: #171717;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+input {
+  padding: 11px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  color: white;
+  background: #242424;
+}
+
+.home {
+  width: min(440px, 92%);
+  margin: 100px auto;
+  text-align: center;
+}
+
+.home form {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.home input {
+  min-width: 0;
+  flex: 1;
+}
+
+.room {
+  max-width: 1400px;
+  margin: auto;
+  padding: 24px;
+}
+
+.room header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 16px;
+}
+
+.room h1,
+.home h1 {
+  margin-bottom: 8px;
+}
+
+.room p {
+  color: #bdbdbd;
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+
+.danger {
+  color: white;
+  background: #b42332;
+}
+
+.participants {
+  padding: 16px;
+  background: #222;
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+
+.participants h2 {
+  font-size: 16px;
+}
+
+.screen-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, 360px), 1fr)
+  );
+  gap: 16px;
+}
+
+.screen-card {
+  min-width: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: #242424;
+}
+
+.screen-card video {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  background: black;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.error {
+  color: #ff8585 !important;
+}
+
+@media (max-width: 600px) {
+  .room {
+    padding: 14px;
+  }
+
+  .room header {
+    align-items: flex-start;
+  }
+}
