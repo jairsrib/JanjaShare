@@ -7,15 +7,21 @@ import { randomUUID } from "node:crypto";
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://SEU-SITE.vercel.app",
+];
+
 app.use(cors({
-  origin: "http://localhost:5174"
+  origin: allowedOrigins
 }));
 
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5174",
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });
@@ -140,6 +146,6 @@ app.get("/api/rooms/new", (_req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
-server.listen(Number(PORT), "0.0.0.0", () => {
+httpServer.listen(Number(PORT), "0.0.0.0", () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
