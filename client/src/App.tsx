@@ -376,7 +376,7 @@ export default function App() {
   if (!joined) {
     return (
       <main className="home">
-        <h1>ScreenShare</h1>
+        <h1>JanjaShare</h1>
         <p>Compartilhe sua tela em tempo real.</p>
 
         <button onClick={() => void createRoom()}>
@@ -402,7 +402,7 @@ export default function App() {
     <main className="room">
       <header>
         <div>
-          <h1>ScreenShare</h1>
+          <h1>JanjaShare</h1>
           <p>Sala: {roomId}</p>
         </div>
         <button onClick={() => void navigator.clipboard.writeText(
