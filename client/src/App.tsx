@@ -268,14 +268,25 @@ export default function App() {
     });
   }
 
+  
   async function createRoom() {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SERVER_URL}/api/rooms/new`
-      );
+      const serverUrl = import.meta.env.VITE_SERVER_URL.replace(/\/+$/, "");
+      const response = await fetch(`${serverUrl}/api/rooms/new`);
+
+      if (!response.ok) {
+        throw new Error("Erro ao criar sala");
+      }
+
       const data = await response.json();
+
+      if (!data.roomId) {
+        throw new Error("ID da sala não recebido");
+      }
+
       await joinRoom(data.roomId);
-    } catch {
+    } catch (error) {
+      console.error("Erro ao criar sala:", error);
       setError("Não foi possível criar a sala.");
     }
   }
