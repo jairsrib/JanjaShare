@@ -496,45 +496,55 @@ export default function App() {
           <h1>JanjaShare</h1>
           <p>Sala: {roomId}</p>
         </div>
-        <button onClick={() => void navigator.clipboard.writeText(
-          `${window.location.origin}/?room=${roomId}`
-        )}>
+
+        <button
+          onClick={() =>
+            void navigator.clipboard.writeText(
+              `${window.location.origin}/?room=${roomId}`
+            )
+          }
+        >
           Copiar link
         </button>
       </header>
 
       <section className="toolbar">
         {isHost && (
-          <button
-            onClick={() =>
-              sharing ? stopSharing() : void startSharing()
-            }
-          >
-            {sharing ? "Parar compartilhamento" : "Compartilhar tela"}
-          </button>
+          <>
+            {!sharing && (
+              <label className="quality-selector">
+                Qualidade:
+                <select
+                  value={quality}
+                  onChange={(e) =>
+                    setQuality(e.target.value as Quality)
+                  }
+                >
+                  <option value="480p">480p</option>
+                  <option value="720p">720p</option>
+                  <option value="1080p">1080p</option>
+                </select>
+              </label>
+            )}
+
+            <button
+              onClick={() =>
+                sharing ? stopSharing() : void startSharing()
+              }
+            >
+              {sharing ? "Parar compartilhamento" : "Compartilhar tela"}
+            </button>
+          </>
         )}
 
         <button className="danger" onClick={leaveRoom}>
           Sair da sala
         </button>
-
-        <label>
-          Qualidade:
-          <select
-            value={quality}
-            onChange={(e) => setQuality(e.target.value as Quality)}
-            disabled={sharing}
-          >
-            <option value="480p">480p</option>
-            <option value="720p">720p</option>
-            <option value="1080p">1080p</option>
-          </select>
-        </label>
-
       </section>
 
       <section className="participants">
         <h2>Participantes ({participants.length}/5)</h2>
+
         {participants.map((id) => (
           <p key={id}>
             {id === hostId ? "Anfitrião" : "Participante"}
@@ -547,6 +557,7 @@ export default function App() {
         {isHost && sharing && screenRef.current && (
           <div className="screen-card">
             <p>Sua tela</p>
+
             <div className="video-container">
               <video
                 autoPlay
@@ -558,18 +569,22 @@ export default function App() {
                   }
                 }}
               />
-              <button onClick={(e) =>
-                void toggleFullscreen(e.currentTarget.parentElement)
-              }>
+
+              <button
+                onClick={(e) =>
+                  void toggleFullscreen(e.currentTarget.parentElement)
+                }
+              >
                 ⛶ Tela cheia
               </button>
-          </div>
+            </div>
           </div>
         )}
 
         {Object.entries(streams).map(([id, stream]) => (
           <div className="screen-card" key={id}>
             <p>Tela compartilhada</p>
+
             <div className="video-container">
               <video
                 autoPlay
@@ -578,9 +593,12 @@ export default function App() {
                   if (el) el.srcObject = stream;
                 }}
               />
-              <button onClick={(e) =>
-                void toggleFullscreen(e.currentTarget.parentElement)
-              }>
+
+              <button
+                onClick={(e) =>
+                  void toggleFullscreen(e.currentTarget.parentElement)
+                }
+              >
                 ⛶ Tela cheia
               </button>
             </div>

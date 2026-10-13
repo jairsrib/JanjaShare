@@ -169,6 +169,21 @@ input {
   object-fit: contain;
 }
 
+.quality-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+}
+
+.quality-selector select {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #222;
+  color: white;
+}
+
 @media (max-width: 600px) {
   .room {
     padding: 14px;
