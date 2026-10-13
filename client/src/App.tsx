@@ -252,16 +252,13 @@ export default function App() {
     return stream;
   }
 
-  const videoContainerRef = useRef<HTMLDivElement>(null);
+  async function toggleFullscreen(element: HTMLElement | null) {
+    if (!element) return;
 
-  async function toggleFullscreen() {
-    const container = videoContainerRef.current;
-    if (!container) return;
-
-    if (document.fullscreenElement) {
+    if (document.fullscreenElement === element) {
       await document.exitFullscreen();
     } else {
-      await container.requestFullscreen();
+      await element.requestFullscreen();
     }
   }
 
@@ -490,42 +487,43 @@ export default function App() {
         {isHost && sharing && screenRef.current && (
           <div className="screen-card">
             <p>Sua tela</p>
-            <video
-              autoPlay
-              muted
-              playsInline
-              ref={(el) => {
-                if (el && screenRef.current) {
-                  el.srcObject = screenRef.current;
-                }
-              }}
-            />
-            <button onClick={(e) =>
-              void toggleFullscreen(e.currentTarget.parentElement)
-            }>
-              ⛶ Tela cheia
-            </button>
+            <div className="video-container">
+              <video
+                autoPlay
+                muted
+                playsInline
+                ref={(el) => {
+                  if (el && screenRef.current) {
+                    el.srcObject = screenRef.current;
+                  }
+                }}
+              />
+              <button onClick={(e) =>
+                void toggleFullscreen(e.currentTarget.parentElement)
+              }>
+                ⛶ Tela cheia
+              </button>
+          </div>
           </div>
         )}
 
         {Object.entries(streams).map(([id, stream]) => (
           <div className="screen-card" key={id}>
             <p>Tela compartilhada</p>
-            <video
-              autoPlay
-              muted
-              playsInline
-              ref={(el) => {
-                if (el && screenRef.current) {
-                  el.srcObject = screenRef.current;
-                }
-              }}
-            />
-            <button onClick={(e) =>
-              void toggleFullscreen(e.currentTarget.parentElement)
-            }>
-              ⛶ Tela cheia
-            </button>
+            <div className="video-container">
+              <video
+                autoPlay
+                playsInline
+                ref={(el) => {
+                  if (el) el.srcObject = stream;
+                }}
+              />
+              <button onClick={(e) =>
+                void toggleFullscreen(e.currentTarget.parentElement)
+              }>
+                ⛶ Tela cheia
+              </button>
+            </div>
           </div>
         ))}
 
