@@ -31,7 +31,7 @@ export default function App() {
     useState<Record<string, MediaStream>>({});
   const [sharing, setSharing] = useState(false);
   const [error, setError] = useState("");
-
+  const [quality, setQuality] = useState<Quality>("720p");
   const screenRef = useRef<MediaStream | null>(null);
   const peers = useRef(new Map<string, RTCPeerConnection>());
   const roomRef = useRef("");
@@ -330,26 +330,23 @@ export default function App() {
     void joinRoom(inputRoom.trim());
   }
 
+  
   async function startSharing() {
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: true
-        });
-      
+      const stream = await captureScreen(quality);
+
       console.log("Faixas de vídeo:", stream.getVideoTracks().length);
       console.log("Faixas de áudio:", stream.getAudioTracks().length);
 
-      screenRef.current = stream;
       sharingRef.current = true;
       setSharing(true);
 
       stream.getVideoTracks()[0].onended = stopSharing;
-      
+
       if (stream.getAudioTracks().length === 0) {
         console.warn(
-        "Nenhuma faixa de áudio foi capturada. Confira as opções de compartilhamento."
-      );
+          "Nenhuma faixa de áudio foi capturada. Confira as opções de compartilhamento."
+        );
       }
 
       for (const userId of participants) {
@@ -362,6 +359,7 @@ export default function App() {
       setError("Compartilhamento cancelado ou indisponível.");
     }
   }
+
 
 
 
@@ -471,6 +469,20 @@ export default function App() {
         <button className="danger" onClick={leaveRoom}>
           Sair da sala
         </button>
+
+        <label>
+          Qualidade:
+          <select
+            value={quality}
+            onChange={(e) => setQuality(e.target.value as Quality)}
+            disabled={sharing}
+          >
+            <option value="480p">480p</option>
+            <option value="720p">720p</option>
+            <option value="1080p">1080p</option>
+          </select>
+        </label>
+
       </section>
 
       <section className="participants">
