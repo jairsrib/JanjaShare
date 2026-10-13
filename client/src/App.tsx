@@ -4,6 +4,11 @@ import type { FormEvent } from "react";
 import { socket } from "./socket";
 import "./App.css";
 
+type Quality = 
+  | "480p" 
+  | "720p" 
+  | "1080p";
+
 type SignalData =
   | { type: "offer"; sdp: RTCSessionDescriptionInit }
   | { type: "answer"; sdp: RTCSessionDescriptionInit }
@@ -225,8 +230,40 @@ export default function App() {
     };
   });
 
+  async function captureScreen(quality: Quality) {
+    const resolutions = {
+      "480p": { width: 854, height: 480 },
+      "720p": { width: 1280, height: 720 },
+      "1080p": { width: 1920, height: 1080 },
+    };
 
+    const resolution = resolutions[quality];
 
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        width: { ideal: resolution.width },
+        height: { ideal: resolution.height },
+        frameRate: { ideal: 30, max: 30 },
+      },
+      audio: true,
+    });
+
+    screenRef.current = stream;
+    return stream;
+  }
+
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+
+  async function toggleFullscreen() {
+    const container = videoContainerRef.current;
+    if (!container) return;
+
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await container.requestFullscreen();
+    }
+  }
 
   async function joinRoom(id: string) {
     setError("");
@@ -328,6 +365,9 @@ export default function App() {
       setError("Compartilhamento cancelado ou indisponível.");
     }
   }
+
+
+
 
   function stopSharing() {
     if (roomRef.current && selfRef.current === hostRef.current) {
@@ -460,6 +500,11 @@ export default function App() {
                 }
               }}
             />
+            <button onClick={(e) =>
+              void toggleFullscreen(e.currentTarget.parentElement)
+            }>
+              ⛶ Tela cheia
+            </button>
           </div>
         )}
 
@@ -468,11 +513,19 @@ export default function App() {
             <p>Tela compartilhada</p>
             <video
               autoPlay
+              muted
               playsInline
               ref={(el) => {
-                if (el) el.srcObject = stream;
+                if (el && screenRef.current) {
+                  el.srcObject = screenRef.current;
+                }
               }}
             />
+            <button onClick={(e) =>
+              void toggleFullscreen(e.currentTarget.parentElement)
+            }>
+              ⛶ Tela cheia
+            </button>
           </div>
         ))}
 
