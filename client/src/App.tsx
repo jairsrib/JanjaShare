@@ -38,6 +38,7 @@ export default function App() {
   const hostRef = useRef("");
   const selfRef = useRef("");
   const sharingRef = useRef(false);
+  const makingOffer = useRef<Map<string, boolean>>(new Map());
   const pendingCandidates =
     useRef(new Map<string, RTCIceCandidateInit[]>());
 
@@ -122,20 +123,41 @@ export default function App() {
 
     const pc = createPeer(userId);
 
-    // Adiciona a tela apenas uma vez por conexão.
-    if (pc.getSenders().length === 0) {
-      screenRef.current.getTracks().forEach((track) => {
-        pc.addTrack(track, screenRef.current!);
-      });
+    // Evita iniciar outra negociação simultaneamente.
+    if (
+      makingOffer.current.get(userId) ||
+      pc.signalingState !== "stable"
+    ) {
+      return;
     }
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
+    makingOffer.current.set(userId, true);
 
-    sendSignal(userId, {
-      type: "offer",
-      sdp: pc.localDescription!
-    });
+    try {
+      const senders = pc.getSenders();
+
+      for (const track of screenRef.current.getTracks()) {
+        const alreadyAdded = senders.some(
+          (sender) => sender.track?.id === track.id
+        );
+
+        if (!alreadyAdded) {
+          pc.addTrack(track, screenRef.current);
+        }
+      }
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      sendSignal(userId, {
+        type: "offer",
+        sdp: pc.localDescription!,
+      });
+    } catch (err) {
+      console.error("Erro ao criar oferta:", err);
+    } finally {
+      makingOffer.current.set(userId, false);
+    }
   }
 
   async function handleSignal(
@@ -146,6 +168,14 @@ export default function App() {
       const pc = createPeer(from);
 
       if (data.type === "offer") {
+        if (pc.signalingState !== "stable") {
+          console.warn(
+            "Oferta recebida durante outra negociação:",
+            pc.signalingState
+          );
+          return;
+        }
+
         await pc.setRemoteDescription(data.sdp);
         await flushCandidates(from, pc);
 
@@ -154,21 +184,26 @@ export default function App() {
 
         sendSignal(from, {
           type: "answer",
-          sdp: pc.localDescription!
+          sdp: pc.localDescription!,
         });
-      }
+      } else if (data.type === "answer") {
+        if (pc.signalingState !== "have-local-offer") {
+          console.warn(
+            "Resposta recebida fora de ordem:",
+            pc.signalingState
+          );
+          return;
+        }
 
-      if (data.type === "answer") {
         await pc.setRemoteDescription(data.sdp);
         await flushCandidates(from, pc);
-      }
-
-      if (data.type === "candidate") {
+      } else if (data.type === "candidate") {
         if (pc.remoteDescription) {
           await pc.addIceCandidate(data.candidate);
         } else {
           const list =
             pendingCandidates.current.get(from) ?? [];
+
           list.push(data.candidate);
           pendingCandidates.current.set(from, list);
         }
