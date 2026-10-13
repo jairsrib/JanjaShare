@@ -298,17 +298,25 @@ export default function App() {
 
   async function startSharing() {
     try {
-      const stream =
-        await navigator.mediaDevices.getDisplayMedia({
+      const stream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
-          audio: false
+          audio: true
         });
+      
+      console.log("Faixas de vídeo:", stream.getVideoTracks().length);
+      console.log("Faixas de áudio:", stream.getAudioTracks().length);
 
       screenRef.current = stream;
       sharingRef.current = true;
       setSharing(true);
 
       stream.getVideoTracks()[0].onended = stopSharing;
+      
+      if (stream.getAudioTracks().length === 0) {
+        console.warn(
+        "Nenhuma faixa de áudio foi capturada. Confira as opções de compartilhamento."
+      );
+      }
 
       for (const userId of participants) {
         if (userId !== selfRef.current) {
