@@ -230,6 +230,7 @@ export default function App() {
     };
   });
 
+  
   async function captureScreen(quality: Quality) {
     const resolutions = {
       "480p": { width: 854, height: 480 },
@@ -240,17 +241,29 @@ export default function App() {
     const resolution = resolutions[quality];
 
     const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: {
+      video: true,
+      audio: true,
+    });
+
+    const videoTrack = stream.getVideoTracks()[0];
+
+    try {
+      await videoTrack.applyConstraints({
         width: { ideal: resolution.width },
         height: { ideal: resolution.height },
         frameRate: { ideal: 30, max: 30 },
-      },
-      audio: true,
-    });
+      });
+    } catch (err) {
+      console.warn("Não foi possível aplicar todas as configurações:", err);
+    }
+
+    console.log("Qualidade selecionada:", quality);
+    console.log("Configurações reais da captura:", videoTrack.getSettings());
 
     screenRef.current = stream;
     return stream;
   }
+
 
   async function toggleFullscreen(element: HTMLElement | null) {
     if (!element) return;
