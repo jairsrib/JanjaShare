@@ -32,6 +32,9 @@ export default function App() {
   const [sharing, setSharing] = useState(false);
   const [error, setError] = useState("");
   const [quality, setQuality] = useState<Quality>("720p");
+  const [watching, setWatching] = useState(false);
+
+
   const screenRef = useRef<MediaStream | null>(null);
   const peers = useRef(new Map<string, RTCPeerConnection>());
   const roomRef = useRef("");
@@ -82,15 +85,33 @@ export default function App() {
       }
     };
 
+    
     pc.ontrack = (event) => {
       const stream = event.streams[0];
-      if (stream) {
-        setStreams((old) => ({
-          ...old,
-          [userId]: stream
-        }));
+
+      if (!stream) {
+        console.warn(
+          "[WebRTC] Nenhum stream recebido de:",
+          userId
+        );
+        return;
       }
+
+      console.log(
+        "[WebRTC] Stream recebido de:",
+        userId,
+        stream.getTracks().map((track) => ({
+          kind: track.kind,
+          readyState: track.readyState,
+        }))
+      );
+
+      setStreams((old) => ({
+        ...old,
+        [userId]: stream,
+      }));
     };
+
 
     pc.onconnectionstatechange = () => {
       if (
@@ -386,16 +407,18 @@ export default function App() {
       console.log("Faixas de vídeo:", stream.getVideoTracks().length);
       console.log("Faixas de áudio:", stream.getAudioTracks().length);
 
-      sharingRef.current = true;
-      setSharing(true);
-
-      stream.getVideoTracks()[0].onended = stopSharing;
-
       if (stream.getAudioTracks().length === 0) {
         console.warn(
           "Nenhuma faixa de áudio foi capturada. Confira as opções de compartilhamento."
         );
       }
+
+      screenRef.current = stream;
+
+      sharingRef.current = true;
+      setSharing(true);
+
+      stream.getVideoTracks()[0].onended = stopSharing;
 
       for (const userId of participants) {
         if (userId !== selfRef.current) {
@@ -407,10 +430,6 @@ export default function App() {
       setError("Compartilhamento cancelado ou indisponível.");
     }
   }
-
-
-
-
 
   function stopSharing() {
     if (roomRef.current && selfRef.current === hostRef.current) {
@@ -581,29 +600,61 @@ export default function App() {
           </div>
         )}
 
+        
+        
         {Object.entries(streams).map(([id, stream]) => (
           <div className="screen-card" key={id}>
             <p>Tela compartilhada</p>
 
             <div className="video-container">
-              <video
-                autoPlay
-                playsInline
-                ref={(el) => {
-                  if (el) el.srcObject = stream;
-                }}
-              />
+              {!watching[id] ? (
+                <button
+                  onClick={() => {
+                    setWatching((old) => ({
+                      ...old,
+                      [id]: true,
+                    }));
+                  }}
+                >
+                  ▶ Assistir transmissão
+                </button>
+              ) : (
+                <video
+                  autoPlay
+                  playsInline
+                  ref={(el) => {
+                    if (!el) return;
 
-              <button
-                onClick={(e) =>
-                  void toggleFullscreen(e.currentTarget.parentElement)
-                }
-              >
-                ⛶ Tela cheia
-              </button>
+                    if (el.srcObject !== stream) {
+                      el.srcObject = stream;
+                    }
+
+                    el.muted = false;
+
+                    void el.play().catch((err) => {
+                      console.error(
+                        "Erro ao iniciar vídeo remoto:",
+                        err
+                      );
+                    });
+                  }}
+                />
+              )}
+
+              {watching[id] && (
+                <button
+                  onClick={(e) =>
+                    void toggleFullscreen(e.currentTarget.parentElement)
+                  }
+                >
+                  ⛶ Tela cheia
+                </button>
+              )}
             </div>
           </div>
         ))}
+
+
 
         {!sharing && Object.keys(streams).length === 0 && (
           <p>Aguardando compartilhamento de tela...</p>
