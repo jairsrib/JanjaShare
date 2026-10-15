@@ -480,188 +480,111 @@ export default function App() {
   },
   []);
 
-
-  const isHost = selfId === hostId;
+const isHost = selfId === hostId;
 
   if (!joined) {
     return (
-      <main className="home">
-        <h1>JanjaShare</h1>
-        <p>Compartilhe sua tela em tempo real.</p>
-
-        <button onClick={() => void createRoom()}>
-          Criar sala
-        </button>
-
-        <form onSubmit={submitJoin}>
-          <input
-            placeholder="Código da sala"
-            value={inputRoom}
-            onChange={(e) => setInputRoom(e.target.value)}
-            required
-          />
-          <button type="submit">Entrar</button>
-        </form>
-
-        {error && <p className="error">{error}</p>}
-      </main>
+      <div className="app-shell home-shell">
+        <header className="topbar">
+          <div className="brand"><div className="brand__mark"><span /><span /></div><span className="brand__name">JanjaShare</span></div>
+          <span className="home-tag">Compartilhamento em tempo real</span>
+        </header>
+        <main className="home-main">
+          <section className="home-card">
+            <div className="home-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+            <p className="eyebrow">SIMPLES. RÁPIDO. AO VIVO.</p>
+            <h1>Compartilhe sua tela<br /><span>com quem importa.</span></h1>
+            <p className="home-description">Crie uma sala e convide outras pessoas para assistir à sua tela em tempo real.</p>
+            <button className="button button--primary home-create" onClick={() => void createRoom()}>＋ Criar nova sala</button>
+            <div className="home-divider"><span />ou entre em uma sala<span /></div>
+            <form className="join-form" onSubmit={submitJoin}>
+              <input placeholder="Digite o código da sala" value={inputRoom} onChange={(e) => setInputRoom(e.target.value)} required />
+              <button className="button button--secondary" type="submit">Entrar</button>
+            </form>
+            {error && <p className="error">{error}</p>}
+            <p className="home-footnote">Até 5 participantes por sala · Sem instalação</p>
+          </section>
+        </main>
+      </div>
     );
   }
 
-  return (
-    <main className="room">
-      <header>
-        <div>
-          <h1>JanjaShare</h1>
-          <p>Sala: {roomId}</p>
-        </div>
+  const remoteEntries = Object.entries(streams);
+  const remoteEntry = remoteEntries[0];
+  const remoteStream = remoteEntry?.[1];
+  const remoteId = remoteEntry?.[0];
+  const isSharingScreen = isHost && sharing && !!screenRef.current;
 
-        <button
-          onClick={() =>
-            void navigator.clipboard.writeText(
-              `${window.location.origin}/?room=${roomId}`
-            )
-          }
-        >
-          Copiar link
-        </button>
+  return (
+    <div className="app-shell">
+      <header className="topbar">
+        <div className="brand"><div className="brand__mark"><span /><span /></div><span className="brand__name">JanjaShare</span></div>
+        <div className="room-meta"><span className="room-meta__label">Sala</span><strong>{roomId}</strong></div>
+        <div className="topbar__actions">
+          <div className={`connection ${socket.connected ? "is-online" : "is-offline"}`}><span className="connection__dot" /><span>{socket.connected ? "Conectado" : "Desconectado"}</span></div>
+          <button className="button button--ghost" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/?room=${roomId}`)} title="Copiar link">⌁ <span className="copy-label">Copiar link</span></button>
+        </div>
       </header>
 
-      <section className="toolbar">
-        {isHost && (
-          <>
-            {!sharing && (
-              <label className="quality-selector">
-                Qualidade:
-                <select
-                  value={quality}
-                  onChange={(e) =>
-                    setQuality(e.target.value as Quality)
-                  }
-                >
-                  <option value="480p">480p</option>
-                  <option value="720p">720p</option>
-                  <option value="1080p">1080p</option>
-                </select>
-              </label>
+      <main className="main">
+        <section className="workspace">
+          <div className="toolbar">
+            <label className={`quality-control ${sharing ? "is-disabled" : ""}`}>
+              <span className="quality-control__label">Qualidade</span>
+              <span className="quality-control__select"><select aria-label="Qualidade da transmissão" disabled={!isHost || sharing} value={quality} onChange={(e) => setQuality(e.target.value as Quality)}><option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option></select><span className="select-chevron">⌄</span></span>
+            </label>
+            <div className="toolbar__actions">
+              {isHost && <button className={`button ${sharing ? "button--secondary" : "button--primary"}`} onClick={() => sharing ? stopSharing() : void startSharing()}>{sharing ? "■ Parar compartilhamento" : "▣ Compartilhar tela"}</button>}
+              <button className="button button--danger" onClick={leaveRoom}>↪ <span className="leave-label">Sair da sala</span></button>
+            </div>
+          </div>
+
+          <div className="stage" ref={(el) => { if (el) { /* fullscreen target */ } }}>
+            {isSharingScreen ? (
+              <>
+                <video autoPlay className="stage__video" muted playsInline ref={(el) => { if (el && screenRef.current && el.srcObject !== screenRef.current) el.srcObject = screenRef.current; }} />
+                <div className="stage__status"><span className="live-dot" /> Sua tela</div>
+                <button className="button button--ghost stage__fullscreen" aria-label="Tela cheia" title="Tela cheia" onClick={(e) => void toggleFullscreen(e.currentTarget.parentElement)}>⛶</button>
+              </>
+            ) : remoteStream && remoteId && !watching[remoteId] ? (
+              <div className="empty-state transmission-state">
+                <div className="empty-state__icon empty-state__icon--live"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span className="live-dot" /></div>
+                <div><h1>Transmissão disponível</h1><p>Uma tela está pronta para ser exibida nesta sala.</p></div>
+                <button className="button button--primary" onClick={() => setWatching((old) => ({ ...old, [remoteId]: true }))}>▶ Assistir transmissão</button>
+                <small>O áudio e o vídeo começam após o seu clique</small>
+              </div>
+            ) : remoteStream && remoteId && watching[remoteId] ? (
+              <>
+                <video autoPlay className="stage__video" playsInline ref={(el) => { if (el) { if (el.srcObject !== remoteStream) el.srcObject = remoteStream; el.muted = false; void el.play().catch((err) => console.error("Erro ao iniciar vídeo remoto:", err)); } }} />
+                <div className="stage__status"><span className="live-dot" /> Transmissão ao vivo</div>
+                <button className="button button--ghost stage__fullscreen" aria-label="Tela cheia" title="Tela cheia" onClick={(e) => void toggleFullscreen(e.currentTarget.parentElement)}>⛶</button>
+              </>
+            ) : (
+              <div className="empty-state">
+                <div className="empty-state__icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+                <div><h1>Ninguém está compartilhando a tela</h1><p>Quando alguém iniciar uma transmissão, ela aparecerá aqui.</p></div>
+                {isHost && <button className="button button--primary" onClick={() => void startSharing()}>▣ Compartilhar tela</button>}
+              </div>
             )}
-
-            <button
-              onClick={() =>
-                sharing ? stopSharing() : void startSharing()
-              }
-            >
-              {sharing ? "Parar compartilhamento" : "Compartilhar tela"}
-            </button>
-          </>
-        )}
-
-        <button className="danger" onClick={leaveRoom}>
-          Sair da sala
-        </button>
-      </section>
-
-      <section className="participants">
-        <h2>Participantes ({participants.length}/5)</h2>
-
-        {participants.map((id) => (
-          <p key={id}>
-            {id === hostId ? "Anfitrião" : "Participante"}
-            {id === selfId ? " (você)" : ""}
-          </p>
-        ))}
-      </section>
-
-      <section className="screen-grid">
-        {isHost && sharing && screenRef.current && (
-          <div className="screen-card">
-            <p>Sua tela</p>
-
-            <div className="video-container">
-              <video
-                autoPlay
-                muted
-                playsInline
-                ref={(el) => {
-                  if (el && screenRef.current) {
-                    el.srcObject = screenRef.current;
-                  }
-                }}
-              />
-
-              <button
-                onClick={(e) =>
-                  void toggleFullscreen(e.currentTarget.parentElement)
-                }
-              >
-                ⛶ Tela cheia
-              </button>
-            </div>
           </div>
-        )}
+          <footer className="stage-footer"><span>Protegido por conexão ponto a ponto</span><span className="stage-footer__quality">{quality} · 30 FPS</span></footer>
+          {error && <p className="error">{error}</p>}
+        </section>
 
-        
-        
-        {Object.entries(streams).map(([id, stream]) => (
-          <div className="screen-card" key={id}>
-            <p>Tela compartilhada</p>
-
-            <div className="video-container">
-              {!watching[id] ? (
-                <button
-                  onClick={() => {
-                    setWatching((old) => ({
-                      ...old,
-                      [id]: true,
-                    }));
-                  }}
-                >
-                  ▶ Assistir transmissão
-                </button>
-              ) : (
-                <video
-                  autoPlay
-                  playsInline
-                  ref={(el) => {
-                    if (!el) return;
-
-                    if (el.srcObject !== stream) {
-                      el.srcObject = stream;
-                    }
-
-                    el.muted = false;
-
-                    void el.play().catch((err) => {
-                      console.error(
-                        "Erro ao iniciar vídeo remoto:",
-                        err
-                      );
-                    });
-                  }}
-                />
-              )}
-
-              {watching[id] && (
-                <button
-                  onClick={(e) =>
-                    void toggleFullscreen(e.currentTarget.parentElement)
-                  }
-                >
-                  ⛶ Tela cheia
-                </button>
-              )}
-            </div>
+        <aside className="participants-panel">
+          <div className="participants-panel__header"><div><span className="eyebrow">NESTA SALA</span><h2>Participantes</h2></div><span className="participant-count">{participants.length}/5</span></div>
+          <div className="participant-list">
+            {participants.map((id) => {
+              const participantIsHost = id === hostId;
+              const participantIsSelf = id === selfId;
+              const label = participantIsSelf ? "Você" : `Participante ${id.slice(0, 4)}`;
+              return <div className="participant" key={id}><div className="avatar"><span>{participantIsSelf ? "V" : "P"}</span><i /></div><div className="participant__identity"><strong>{label}</strong><span>{participantIsSelf ? "Sua conexão" : "Na sala"}</span></div>{participantIsHost && <span className="host-badge">Anfitrião</span>}</div>;
+            })}
+            {participants.length === 0 && <p className="participant-empty">Nenhum participante conectado.</p>}
           </div>
-        ))}
-
-
-
-        {!sharing && Object.keys(streams).length === 0 && (
-          <p>Aguardando compartilhamento de tela...</p>
-        )}
-      </section>
-
-      {error && <p className="error">{error}</p>}
-    </main>
+          <div className="participants-panel__tip"><span className="tip-icon">ⓘ</span><p>Compartilhe o link para convidar pessoas. <strong>Até 5 participantes.</strong></p></div>
+        </aside>
+      </main>
+    </div>
   );
 }
