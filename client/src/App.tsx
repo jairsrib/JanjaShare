@@ -32,7 +32,7 @@ export default function App() {
   const [sharing, setSharing] = useState(false);
   const [error, setError] = useState("");
   const [quality, setQuality] = useState<Quality>("720p");
-  const [watching, setWatching] = useState(false);
+  const [watching, setWatching] = useState<Record<string, boolean>>({});
 
 
   const screenRef = useRef<MediaStream | null>(null);

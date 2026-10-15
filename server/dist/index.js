@@ -7,7 +7,7 @@ const app = express();
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:5174",
-    "https://SEU-SITE.vercel.app",
+    "https://janja-share.vercel.app",
 ];
 app.use(cors({
     origin: allowedOrigins
